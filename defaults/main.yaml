@@ -422,7 +422,7 @@ headscale_derp_update_frequency: 24h
 ## External derp server list
 ## ---------------------------------------------------------------------------------------------------------------------
 # If you plan to somehow use headscale, please deploy your own DERP infra: https://tailscale.com/kb/1118/custom-derp-servers/
-headscale_derp_servers_list:
+headscale_derp_servers_list: []
 #  - regionid: 900
 #    regioncode: custom
 #    regionname: My Region
