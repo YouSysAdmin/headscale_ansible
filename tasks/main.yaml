@@ -1,0 +1,10 @@
+- name: Preflight
+  ansible.builtin.import_tasks: preflight.yaml
+
+- name: Install
+  become: true
+  ansible.builtin.import_tasks: install.yaml
+
+- name: Configure
+  become: true
+  ansible.builtin.import_tasks: configure.yaml

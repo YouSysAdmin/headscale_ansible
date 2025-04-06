@@ -1,0 +1,5 @@
+---
+use_default_rules: true
+skip_list:
+  - name[template] # Jinja templates in a task name
+  - yaml[line-length]  # Lines should be no longer than 160 chars

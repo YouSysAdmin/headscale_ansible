@@ -1,0 +1,8 @@
+dependencies: []
+galaxy_info:
+  role_name: headscale_ansible
+  namespace: yousysadmin
+  author: Oleksii Samoliuk
+  description: Install and configure the headscale
+  license: MIT
+  min_ansible_version: 2.18.4

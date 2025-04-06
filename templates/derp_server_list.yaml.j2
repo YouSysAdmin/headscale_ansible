@@ -1,0 +1,8 @@
+---
+{{ ansible_managed | comment }}
+regions:
+  {{ item.regionid }}:
+    regionid: {{ item.regionid }}
+    regioncode: {{ item.regioncode }}
+    regionname: {{ item.regionname }}
+    nodes: {{ item.nodes }}

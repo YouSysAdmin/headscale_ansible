@@ -1,0 +1,91 @@
+## ---------------------------------------------------------------------------------------------------------------------
+## Create system user and group
+## ---------------------------------------------------------------------------------------------------------------------
+- name: Create system headscale group
+  ansible.builtin.group:
+    name: "{{ headscale_system_group }}"
+    system: true
+    state: present
+
+- name: Create system headscale user
+  ansible.builtin.user:
+    name: "{{ headscale_system_user }}"
+    group: "{{ headscale_system_group }}"
+    shell: "/usr/sbin/nologin"
+    createhome: false
+    home: "{{ headscale_install_dir }}"
+    system: true
+    state: present
+
+## ---------------------------------------------------------------------------------------------------------------------
+## Create installation dir
+## ---------------------------------------------------------------------------------------------------------------------
+- name: Create installation directory if not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ headscale_system_user }}"
+    group: "{{ headscale_system_group }}"
+    mode: "0740"
+  loop:
+    - "{{ headscale_install_dir }}"
+    - "{{ headscale_data_dir }}"
+    - "{{ headscale_cache_dir }}"
+    - "{{ headscale_derp_configs_dir }}"
+
+## ---------------------------------------------------------------------------------------------------------------------
+## Download and install binary file if a selected version not exist
+## ---------------------------------------------------------------------------------------------------------------------
+- name: Download and install headscale dist
+  when: not headscale_binary_file_is_exist
+  block:
+    - name: "Get headscale release checksum list"
+      ansible.builtin.set_fact:
+        __headscale_checksums: "{{ lookup('url', 'https://github.com/' + headscale_github_repo_owner + '/' + headscale_github_repo_name + '/releases/download/v' + headscale_version + '/checksums.txt', wantlist=True) | list }}"
+      run_once: true
+
+    - name: "Get headscale release checksum for {{ __os_arch }} architecture"
+      ansible.builtin.set_fact:
+        __headscale_checksum: "{{ item.split(' ')[0] }}"
+      with_items: "{{ __headscale_checksums }}"
+      when:
+        - "('headscale_' + headscale_version + '_linux_' + __os_arch) in item and item is not search('deb')"
+
+    - name: Download headscale binary
+      ansible.builtin.get_url:
+        url: "https://github.com/{{ headscale_github_repo_owner }}/{{ headscale_github_repo_name }}/releases/download/v{{ headscale_version }}/headscale_{{ headscale_version }}_linux_{{ __os_arch }}"
+        dest: "/{{ headscale_github_download_path }}/headscale_{{ headscale_version }}"
+        checksum: "sha256:{{ __headscale_checksum }}"
+        owner: "{{ headscale_system_user }}"
+        group: "{{ headscale_system_group }}"
+        mode: "0640"
+      register: __download_binary
+      until: __download_binary is succeeded
+      retries: 3
+      delay: 2
+      # run_once: true # <-- this cannot be set due to multi-arch support
+      check_mode: false
+
+    - name: Copy headscale binary file to install dir
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ headscale_github_download_path }}/headscale_{{ headscale_version }}"
+        dest: "{{ headscale_install_dir }}/headscale_{{ headscale_version }}"
+        owner: "{{ headscale_system_user }}"
+        group: "{{ headscale_system_group }}"
+        mode: "0755"
+
+## ---------------------------------------------------------------------------------------------------------------------
+## SystemD
+## ---------------------------------------------------------------------------------------------------------------------
+- name: Install SystemD service
+  ansible.builtin.template:
+    src: "headscale.service.j2"
+    dest: "{{ headscale_systemd_unit_file }}"
+    force: true
+    owner: root
+    group: root
+    mode: "0660"
+  notify:
+    - Enable_service
+    - Restart_service

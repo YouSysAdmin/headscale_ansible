@@ -1,0 +1,20 @@
+- name: Enable_service
+  become: true
+  ansible.builtin.systemd_service:
+    name: headscale
+    enabled: true
+    daemon_reload: true
+
+- name: Restart_service
+  become: true
+  ansible.builtin.systemd_service:
+    name: headscale
+    state: restarted
+    daemon_reload: true
+
+- name: Reload_service
+  become: true
+  ansible.builtin.systemd_service:
+    name: headscale
+    state: reloaded
+    daemon_reload: true

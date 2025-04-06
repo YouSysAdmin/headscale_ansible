@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+echo "Stop the headscale SystemD service"
+sudo systemd stop {{ headscale_systemd_unit_file }}
+sudo systemd disable {{ headscale_systemd_unit_file }}
+
+echo "Uninstall the SystemD unit file"
+rm -f {{ headscale_systemd_unit_file }}
+
+echo "Backup data"
+tar -czvf {{ headscale_install_dir }}.tar.gz -C {{ headscale_install_dir }} .
+
+echo "Remove installation dir"
+rm -rf {{ headscale_install_dir }}

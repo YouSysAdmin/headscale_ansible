@@ -1,0 +1,36 @@
+---
+## ---------------------------------------------------------------------------------------------------------------------
+## Generate and install a config files
+## ---------------------------------------------------------------------------------------------------------------------
+- name: Install headacale DERP servers list config files
+  ansible.builtin.template:
+    src: "derp_server_list.yaml.j2"
+    dest: "{{ headscale_derp_configs_dir }}/region_{{ item.regionid }}.yaml"
+    owner: "{{ headscale_system_user }}"
+    group: "{{ headscale_system_group }}"
+    mode: "0640"
+    backup: true
+  with_items: "{{ headscale_derp_servers_list }}"
+  when: headscale_derp_servers_list | length > 0
+  notify:
+    - Restart_service
+
+- name: Install headacale config file
+  ansible.builtin.template:
+    src: "headscale_config.yaml.j2"
+    dest: "{{ headscale_config_path }}"
+    owner: "{{ headscale_system_user }}"
+    group: "{{ headscale_system_group }}"
+    mode: "0640"
+    backup: true
+  notify:
+    - Restart_service
+
+- name: Install headacale uninstall script
+  ansible.builtin.template:
+    src: "uninstall.sh.j2"
+    dest: "{{ headscale_install_dir }}/uninstall.sh"
+    owner: "{{ headscale_system_user }}"
+    group: "{{ headscale_system_group }}"
+    mode: "0755"
+    backup: false
